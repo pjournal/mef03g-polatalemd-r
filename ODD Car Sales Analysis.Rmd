@@ -1,0 +1,110 @@
+---
+title: "ODD Car Data Analysis"
+output: html_document
+---
+#### <u> Understanding Turkey Automative Market </u>
+
+_"Turkey is a dynamic automative market with high dependency on import automative figures. The following report grasps insight related to market mechanism, provided by ODD which has the vision of providing the continuity and improvement of automotive sector as having the international competitive capacity within the concept of modernity, environmental awareness and social responsibility". Please check for the details of ODD foundation [web site](http://www.odd.org.tr/web_2837_2/neuralnetwork.aspx?type=1) _
+
+**Note: In this project, we focused on mostly charts and graphs since we believe that it is quite catchy and informative rather than text based tables
+
+#### __Source Page__
+To craft the structure of the work related to the Turkish automative market, gathering big data is essential from [ODD's reports panel.](http://www.odd.org.tr/web_2837_1/neuralnetwork.aspx?type=36) Bounding ODD'scommercial retail sales reports contributes to the reconstructed data frame. Structural steps can be found below.
+
+```{r eval=FALSE}
+file.list <- list.files(pattern='your file pattern')
+data_frames_not_bound <- lapply(file.list,read_excel,col_names=column_names_vector)
+bound_data_frames <- bind_rows(data_frames_not_bound)
+``` 
+
+#### __Upload of Civilized Data__
+In order to enhance reproduceable source, civilized data to group's [GitHub page.](https://github.com/pjournal/mef03g-polatalemd-r)
+
+```{r results='hide', message=FALSE}
+tmp <- tempfile(fileext = ".xlsx")
+download.file("https://github.com/pjournal/mef03g-polatalemd-r/blob/master/dfson.xlsx?raw=true",destfile = tmp,mode = 'wb')
+dfson <- readxl::read_excel( tmp ,col_names = TRUE)
+file.remove(tmp)
+``` 
+
+```{r}
+head(dfson)
+``` 
+
+#### __Analyses Related to Sales Activity__
+##### <u>_Total Sales per Brand | Analysis_</u>
+Obtaining total sales per brand, helps one to observe total sales of each brand in the market and growth split for each year. Observing that Renault is the biggest market, followed by VW and Fiat based on sales data with a decreasing trend of sales due to market volatility. These brands are low-cost brands which aids to oversee Turkish automative market mass purchasing capability.
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(zoo)
+
+dfson %>%
+  filter(auto_total > 0 & comm_total > 0) %>%
+  select(brand_name,auto_total,comm_total,total_total,year) %>%
+  arrange(desc(year),desc(total_total)) %>%
+  group_by(brand_name, year) %>%
+  summarize(year_total = sum(total_total)) %>%
+  arrange(desc(year_total))%>%
+  ggplot(data = ., aes(x = brand_name, y = year_total,
+  fill = as.character(year))) + geom_bar(stat = "identity") + aes(x = reorder(brand_name, -year_total),
+  y =year_total) + labs(x = "", y = "", title = "Total Sales per Brand") + theme_bw() + theme( axis.text.x = element_text(angle = 90,
+  vjust = 0.49, hjust = 0.49, size = 8)) + scale_y_continuous(labels = scales::comma) +   guides(fill=guide_legend(title="Year", reverse=TRUE))
+
+``` 
+
+
+##### <u>_Domestic Auto Sales Share Per Brand_</u>
+To understand better, focusing on domestic auto sales helps to observe how market leaders change w/o imported brands.
+```{r message=FALSE}
+
+dfson %>%
+  select(brand_name,auto_dom) %>% group_by(brand_name) %>% summarise(auto_dom_total = sum(auto_dom)) %>%
+  arrange(desc(auto_dom_total)) %>%
+  filter(auto_dom_total>0) %>% transmute(brand_name, dom_fraction = (auto_dom_total / sum(auto_dom_total) *100)) %>%
+  ggplot(data = ., aes(x = "", y = dom_fraction, fill = brand_name)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(y = dom_fraction, label = brand_name),position = position_stack(vjust = 0.5),color = "white")+
+  scale_fill_manual(values = c("red", "seagreen3", "grey","blue","green","orange")) +
+  theme_void()
+``` 
+
+##### <u>_Monthly Total Sales for Top Sellers 2019_</u>
+This chart aids to see which brands have impactful uplift on latest month. It is quite observable to see credit aids helped sales to grow vs months ago on domestic brands.
+```{r message=FALSE}
+
+top_sellers <- c("RENAULT","FIAT","FORD","VOLKSWAGEN","HYUNDAI","DACIA","OPEL","TOYOTA","PEUGEOT","MERCEDES-BENZ")                                                        
+
+dfson %>% filter(brand_name %in% top_sellers, year == 2019) %>%  ggplot(aes(x=month, y=total_total, color=brand_name)) +
+  geom_line() + labs(title="Monthly Total Sales for Top Sellers 2019 (9 months)")
+
+``` 
+
+##### <u>_Mercedes vs Volkswagen in Years_</u>
+Comparing imported brands based on their year trend helps to oversee the decrease on sales due to market dynamics. Noting that Mercedes-Benz has a small impact than VW due to luxury segment automative consumption has not been reflected on market data yet.
+```{r message=FALSE}
+
+dfson %>%
+  group_by(brand_name, year) %>% 
+  filter(brand_name %in% c("MERCEDES-BENZ", "VOLKSWAGEN")) %>%
+  summarize(yearly_auto_total = sum(auto_total))%>%
+  ggplot(data=., aes(x=year, y=yearly_auto_total, fill=brand_name)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(x="Years", y = "Number Of Sales", fill="Brands") +
+  theme_minimal()
+
+``` 
+
+##### <u>_Total Car Sales per Month as Date Formated_</u>
+This chart is put on this work to make sure that table structure works on our project.
+```{r message=FALSE}
+
+monthly_sales <- dfson %>% group_by(year,month) %>% summarise(total_auto=sum(auto_total))%>% arrange(year, month)%>%slice(1:12)
+monthly_sales$Date <- zoo::as.yearmon(paste(monthly_sales$year,monthly_sales$month), "%Y %m")
+monthly_sales$DateFormated <- format(monthly_sales$Date,"%Y-%m")
+head(monthly_sales)
+
+``` 
+
