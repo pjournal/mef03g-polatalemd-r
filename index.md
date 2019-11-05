@@ -9,4 +9,4 @@ Members:
 
 ### ODD Assignment (Group)
 
-You can see our assignment on this [link] (https://github.com/pjournal/mef03g-polatalemd-r/blob/master/ODD%20Car%20Sales%20Analysis.Rmd).
+You can see our assignment on this [link] (https://github.com/pjournal/mef03g-polatalemd-r/blob/master/ODD%20Car%20Sales%20Analysis.html).
