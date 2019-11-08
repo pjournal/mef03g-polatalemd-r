@@ -1,0 +1,111 @@
+---
+title: "EGM"
+output: html_document
+---
+#### __From Raw to Civilized Data__
+
+First we find the data from [EGM website](https://www.egm.org.tr/bilgi-merkezi/istatistikler/).We download the data change the name to egm_example_data.xlsx. We will make a reproducible example of data analysis from the raw data located somewhere to the final analysis.
+
+
+#### __Download Row Data__
+
+
+We created a new file as name "tmp", then download the file from repository to the "tmp".We read that excel file by using readxl package's read_excel function and removed to temporary file that we created.
+
+```{r,results='hide',message=FALSE}
+tmp=tempfile(fileext=".xlsx")
+
+download.file("https://github.com/pjournal/mef03g-polatalemd-r/blob/master/egm_example_data.xlsx?raw=true",destfile=tmp,mode='wb')
+raw_data=readxl::read_excel(tmp)
+file.remove(tmp)
+
+``` 
+You can view head and tail of the dataset in below tables, respectively.
+
+
+
+```{r}
+head(raw_data)
+tail(raw_data)
+
+``` 
+#### __Analyses Related to Pension Dataset__
+
+##### <u>_Total Participant Comparision of All Companies | Jul 2019_</u>
+
+To see the competition in the market, we compare the companies according to latest dated report. We analyzed top 5 firms individually and merge the other ones and named them "Others". There is a big competition between _"Garanti Emeklilik ve Hayat"_ and _"Anadolu Hayat Emeklilik"_. Total of the other 13 companies is in the third place with a 15.5% of market share. _"Avivasa Emeklilik ve Hayat", _ _"Allianz Yasam ve Emeklilik"_ and _"Ziraat Hayat ve Emeklilik" _ are following the Others respectively.
+
+
+
+
+```{r, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(zoo)
+
+participant=raw_data[raw_data$date == '7.31.2019' ,c(1,2,3)] %>% 
+  arrange(desc(n_of_participants)) %>% 
+  mutate(pension_fund_company = case_when(pension_fund_company %in% c("Aegon Emeklilik ve Hayat", "Allianz Hayat ve Emeklilik", "Axa Hayat ve Emeklilik", "Bereket Emeklilik ve Hayat", "BNP Paribas Cardif Emeklilik", "Cigna Finans Emeklilik ve Hayat", "Fiba Emeklilik ve Hayat", "Groupama Hayat", "Katılım Emeklilik ve Hayat", "Metlife Emeklilik ve Hayat", "NN Hayat ve Emeklilik") ~ "Others", TRUE ~ pension_fund_company)) %>% 
+  group_by(pension_fund_company) %>% mutate(n_of_participants = sum(n_of_participants)) %>% distinct() %>% 
+  arrange(desc(n_of_participants)) %>% ungroup(pension_fund_company) %>% 
+  transmute(pension_fund_company, share = percent(n_of_participants / sum(n_of_participants)))
+
+                
+print(participant)
+``` 
+
+
+
+You can see the pie chart that shows the distribution of the market share.
+```{r, message=FALSE}
+  participant%>%
+  ggplot(data = ., aes(x = "", y = share, fill = pension_fund_company)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1.6, y = share, label = share),position = position_stack(vjust = 0.5),color = "black")+
+  labs(fill = "Pension Companies")+
+  theme_void()
+``` 
+
+##### <u>_Top 5 Companies Based on Their Pension Fund Size | Jul 2019_</u>
+
+Beside the number of participants, pension fund size is another indicator that shows how well a company is doing in the competition. To demonstrate it, we analyzed the latest report and visualized top 5 companies according to the fund size below. _"Avivasa Emeklilik ve Hayat",_ is ahead of their competitors and managed to be the number one company.
+
+
+```{r, message=FALSE}
+
+library(ggplot2)
+###
+raw_data2 = raw_data %>% filter(date == "7.31.2019") %>%
+  arrange(desc(fund_size_participants)) %>%top_n(5)
+print(raw_data2)
+###
+raw_data2 %>%
+  ggplot(data = ., aes(x = pension_fund_company, y = fund_size_participants,
+                       fill = pension_fund_company)) + 
+  geom_bar(stat = "identity")  + 
+  aes(x = reorder(pension_fund_company, -fund_size_participants), y = fund_size_participants) +
+  labs(x = "Companies in descending order", y = "Size", title = "Top 5 Big Companies based on their  Pension Funds Size", fill= "Companies")+  theme_minimal() + theme(axis.text.x = element_text(angle = 15, hjust = 0.6))
+
+
+``` 
+
+
+
+##### <u>_Development of Pension Funds per Participant | Avivasa Emeklilik ve Hayat_</u>
+
+As shown above, _"Avivasa Emeklilik ve Hayat",_ and _"Anadolu Hayat Emeklilik"_ has the biggest pension funds size and they are in the top places according to number of participants. We would like to analyze amount of pension funds per participant in 2019 for these companies. Amount of funds per participant is rising since January, an now it is more than 21000 Turkish Liras.
+
+```{r, message=FALSE}
+library(ggplot2)
+###
+raw_data %>% select(date, pension_fund_company, n_of_participants, fund_size_participants) %>% 
+  filter(pension_fund_company %in% c("Avivasa Emeklilik ve Hayat","Anadolu Hayat Emeklilik"), date %in% c("7.31.2019", "6.30.2019", "5.31.2019", "4.30.2019", "3.31.2019", "2.28.2019", "1.31.2019")) %>%
+  mutate(fund_per_participant = fund_size_participants / n_of_participants) %>%
+  ggplot(data=., aes(x=date, y=fund_per_participant, fill=pension_fund_company)) +
+  geom_bar(stat="identity", position=position_dodge())+
+labs(x = "Jan-Jul 2019",y= "Funds per Person", title = "Development of Pension Funds per Participant", fill= "Company") +
+  theme_minimal()
+
+``` 
