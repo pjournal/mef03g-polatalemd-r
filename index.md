@@ -10,3 +10,7 @@ Members:
 ### ODD Assignment (Group)
 
 You can see our assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/ODD-Car-Sales-Analysis.html).
+
+### EGM Assignment (Group)
+
+You can see our assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/EGM_DATA_ANALYSIS.html).
