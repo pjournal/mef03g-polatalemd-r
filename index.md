@@ -1,11 +1,11 @@
-## Welcome to PolatAlemd-r GitHub Page
+## Welcome to PolatAlemd-R GitHub Page
 
 Members:
-- Burcu
-- Özgür
-- Berk
-- Oğuz
-- Oğuz
+- Burcu Balkan
+- Berk çakar
+- Oğuz Ay
+- Oğuz Kirazdiken
+- Özgür Kenanoğlu
 
 ### ODD Assignment (Group)
 
@@ -14,3 +14,7 @@ You can see our assignment on this [link](https://pjournal.github.io/mef03g-pola
 ### EGM Assignment (Group)
 
 You can see our assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/EGM_DATA_ANALYSIS.html).
+
+### Project Proposal
+
+You can see our project proposal [here](https://pjournal.github.io/mef03g-polatalemd-r/Polat-Alemd-R-Project-Proposal.html).
