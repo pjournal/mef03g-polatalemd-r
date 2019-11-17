@@ -18,3 +18,7 @@ You can see our assignment on this [link](https://pjournal.github.io/mef03g-pola
 ### Project Proposal
 
 You can see our project proposal [here](https://pjournal.github.io/mef03g-polatalemd-r/Polat-Alemd-R-Project-Proposal.html).
+
+### Project Initial Analysis
+
+You can see our project initial analysis [here](https://pjournal.github.io/mef03g-polatalemd-r/Polat-AlemdR-Project-Initial-Analysis.html).
