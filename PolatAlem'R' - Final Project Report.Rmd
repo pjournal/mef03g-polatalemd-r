@@ -1,0 +1,1142 @@
+---
+title: "Understanding Turkey Higher Education System"
+author: "PolatAlemd'R'"
+date: "12/3/2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Summary
+Welfare of a society is highly correlated with quality of its education system, especially higher education. This study aims to focus on deep-diving on Turkey Higher Education system facts and figures and providing key improvement areas based on findings. The agenda bar on the left-handside will enable reader to navigate across content. 
+
+The study consists of three main parts of dataset and structure.
+
+1. University statistics
+2. Admission exam facts & figures
+3. Exchange program capabilities in country
+
+# Improvement Areas Observed
+
+1. The split of women participated in the program should be close to male split ratio by years.
+2. Post-graduate students are mostly studying in Marmara region. More incentives should be given for other regions to obtain better distribution for other regions.
+3. Female split in post-graduate is even smaller than total student split. This should be altered.
+
+
+# Libraries utilized for the study:
+
+
+```{r,results='hide',message=FALSE}
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(zoo)
+library(tidyverse)
+library(formattable)
+library(ggplot2)
+library(lubridate)
+library(plyr)
+library(readxl)
+library(ggpubr)
+library(scales)
+library(knitr)
+```
+
+# 1. University Statistics Analyses
+
+## 1.1. From Raw to Civilized Data
+
+Data is downloaded consisting facts and figures related to universities and students from Council of Higher Education website and is gathered in an excel file. 
+
+Names of some cities were written differently in data of different years. To overcome this problem, city named are changed. In example: "ICEL" city names to "MERSIN" and all "AFYON" city names to "AFYONKARAHISAR" and the total number of cities are equal to 81 distinct cities in raw data. 
+
+To use it in further analysis, created a _"REGION"_ column by grouping the cities.
+
+```{r, results='hide',message=FALSE, error=FALSE}
+
+tmp=tempfile(fileext=".xlsx")
+
+download.file("https://github.com/pjournal/mef03g-polatalemd-r/blob/master/university_statistics_2019-2014.xlsx?raw=true",destfile=tmp,mode='wb')
+raw_data=readxl::read_excel(tmp)
+file.remove(tmp)
+
+raw_data$city <- revalue(raw_data$city, c("ICEL"="MERSIN"))
+raw_data$city <- revalue(raw_data$city, c("AFYON"="AFYONKARAHISAR"))
+
+
+raw_data <- raw_data %>% mutate(region = case_when(city %in% c("ADANA", "ANTALYA", "BURDUR", "HATAY", "ISPARTA", 
+                                                       "KAHRAMANMARAS", "MERSIN", "OSMANIYE") ~ "Mediterrenean",
+                                           city %in% c("AGRI", "ARDAHAN", "BINGOL", "BITLIS", "ELAZIG",
+                                                       "ERZINCAN", "ERZURUM", "HAKKARI", "IGDIR", "KARS",
+                                                       "MALATYA", "MUS", "TUNCELI", "VAN") ~ "East Anatolia",
+                                           city %in% c("AFYONKARAHISAR", "AYDIN", "DENIZLI", "IZMIR",
+                                                       "KUTAHYA", "MANISA", "MUGLA", "USAK") ~ "Aegean",
+                                           city %in% c("ADIYAMAN", "BATMAN", "DIYARBAKIR", "GAZIANTEP",
+                                                       "MARDIN", "SIIRT", "SANLIURFA", "SIRNAK", "KILIS") ~ "South East Anatolia",
+                                           city %in% c("AKSARAY", "ANKARA","CANKIRI","ESKISEHIR","KARAMAN","KAYSERI","KIRIKKALE",
+                                                       "KIRSEHIR", "KONYA","NEVSEHIR","NIGDE","SIVAS","YOZGAT") ~ "Middle Anatolia",
+                                           city %in% c("BALIKESIR", "BILECIK", "BURSA", "CANAKKALE","EDIRNE",
+                                                       "ISTANBUL", "KIRKLARELI","KOCAELI","SAKARYA",
+                                                       "TEKIRDAG","YALOVA") ~ "Marmara",
+                                           city %in% c("AMASYA","ARTVIN","BARTIN","BAYBURT","BOLU","CORUM",
+                                                       "DUZCE","GIRESUN","GUMUSHANE","KARABUK","KASTAMONU",
+                                                       "ORDU","RIZE","SAMSUN","SINOP","TOKAT","TRABZON",
+                                                       "ZONGULDAK") ~ "Blacksea", TRUE ~ "bilinmiyor"))
+```
+
+Understanding variables and observations coming from Council of Higher Education (Yuksek Ogretim Kurumu)
+```{r}
+head(raw_data)
+str(raw_data)
+```
+
+## 1.2. Analyses of Student Numbers Dataset
+
+### 1.2.1. Number of Student in All Universities
+
+This table enables to observe total number of students (7M) by type of university in the last five years.
+
+Data is grouped by 'year_of_education' column and calculated the total number of students at State and foundation University.The increase in the number of population has led to an increase in the number of students in both state and foundation universities. However, observing that the growth rates are decreasing.
+
+All universities in Turkey have 7729790 students in total (Academic year of 2018-2019)
+
+
+```{r,results='hide',message=FALSE}
+devlet_total <- raw_data %>% 
+  transmute(year_of_education, type_of_university, total_total) %>% 
+  group_by(year_of_education) %>% 
+  transmute(total_student_number_d = sum(total_total)) %>% 
+  distinct() %>% 
+  arrange(desc(total_student_number_d))
+
+plot1 <- ggplot(devlet_total, aes(x=year_of_education, y=total_student_number_d)) +
+  geom_bar(stat="identity",position="dodge", fill = "#CC0000") +scale_y_continuous(labels = scales::comma)+
+  labs(x="Years", y = "Number of Students")+labs(title = "Number of Students Based on Years (All Universities)") + theme_minimal() + theme(line=element_blank())
+plot1
+```
+
+
+### 1.2.1. Number of Student in State Universities
+
+This table enables to observe total number of students (7M) by type of university in the last five years.
+
+Data is grouped by 'year_of_education' column and calculated the total number of students at State and foundation University.The increase in the number of population has led to an increase in the number of students in both state and foundation universities. However, observing that the growth rates are decreasing.
+
+State universities have 7134674 students in total (Academic year of 2018-2019)
+
+```{r,results='hide',message=FALSE}
+devlet_total <- raw_data %>% 
+  transmute(year_of_education, type_of_university, total_total) %>% 
+  filter(type_of_university == 'DEVLET') %>% 
+  group_by(year_of_education) %>% 
+  transmute(total_student_number_d = sum(total_total)) %>% 
+  distinct() %>% 
+  arrange(desc(total_student_number_d))
+
+plot1 <- ggplot(devlet_total, aes(x=year_of_education, y=total_student_number_d)) +
+  geom_bar(stat="identity",position="dodge", fill = "#CC0000") +scale_y_continuous(labels = scales::comma)+
+  labs(x="Years", y = "Number of Students")+labs(title = "Number of Students Based on Years (State Universities)") + theme_minimal() + theme(line=element_blank())
+plot1
+```
+
+### 1.2.2. Number of Students in Foundation Universities
+
+Data is grouped by 'year_of_education' column and calculated the total number of students at State and foundation University.The increase in the number of population has led to an increase in the number of students in both state and foundation universities. However, observing that the growth rates are decreasing.
+
+Foundation universities have 595116 students in total (Academic year of 2018-2019)
+
+```{r,results='hide',message=FALSE}
+vakif_total <- raw_data %>% 
+  transmute(year_of_education, type_of_university, total_total) %>% 
+  filter(type_of_university == 'VAKIF') %>% 
+  group_by(year_of_education) %>% 
+  transmute(total_student_number_v = sum(total_total)) %>%
+  distinct() %>% 
+  arrange(desc(total_student_number_v))
+
+plot2 <- ggplot(vakif_total, aes(x=year_of_education, y=total_student_number_v)) +
+  geom_bar(stat="identity",position="dodge",fill = "#DA4545") +scale_y_continuous(labels = scales::comma)+
+  labs(x="Years", y = "Number of Students")+labs(title = "Number of Students Based on Years (Foundation Universities)") + theme_minimal() + theme(line=element_blank())
+plot2
+```
+
+
+You can see the difference in the number of students in state and foundation universities in the chart below.
+
+```{r,results='hide',message=FALSE}
+
+a <- raw_data %>%
+  transmute(year_of_education, type_of_university, total_total) %>% 
+  group_by(type_of_university) %>% 
+  transmute(year_of_education,total_total,sum_total = sum(total_total)) %>% ungroup() %>% 
+  group_by(year_of_education,type_of_university) %>% 
+  transmute(total_student_number= sum(total_total)) %>% 
+  distinct() %>%
+  arrange(desc(total_student_number)) %>% distinct()
+
+plot_a <- ggplot(a,aes(x = year_of_education, y = total_student_number,fill = type_of_university))+
+  geom_bar(stat="identity",position="stack") +scale_fill_manual(values = c("#CC0000","#DA4545","#FF0606"))+
+  scale_y_continuous(labels = scales::comma)+ 
+  labs(x="", y = "Number of Student")+
+  labs(title = "Number of Students Based on Types",fill="Type of University") + theme_minimal() + theme(line=element_blank())
+plot_a
+
+```
+
+
+### 1.2.2. Number of University in Turkey
+
+To understand better the landscape of the higher education ecosystem in Turkey, analyzing growth and distribution of state and foundation type of universities are essential. Observing that most 64% of universities are state universities.  However, 92% of total students are studying in state universities. This uneven distribution is caused by open university service.
+Although the increase in the number of universities is normal due to the increase in population, we observe a decrease in foundation universities in 2016-2017 period.We can say that is the result of coup attempt on July 15, 2016.With the closure of foundation universities, students were placed in state universities.This has led to an increase in the number of students in state universities on 2017-2018.
+
+
+```{r,results='hide',message=FALSE}
+n <- rep(1, times= nrow(raw_data))
+
+uni_numbers_each_year <- raw_data %>%
+  mutate(number1=n) %>%
+  select(year_of_education, type_of_university, total_total, name_of_university, number1) %>%
+  group_by(year_of_education,type_of_university) %>% 
+  transmute( number_of_uni=sum(number1))%>% distinct()
+
+plot1b <- ggplot(uni_numbers_each_year,aes(x = year_of_education, y = number_of_uni,color=type_of_university))+
+  geom_point(shape = 21,color = "red",fill="red")+ 
+  geom_line(aes(group = type_of_university)) +
+  scale_color_manual(values=c("#DA4545","#A12727","#FF0606"))+
+  labs(x="", y = "Number of University",color = "Type of University")+
+  labs(title = "Number of University Based on Years") + theme_minimal() + theme(line=element_blank())
+plot1b
+```
+
+### 1.2.3. Growth Rates of Number of Students
+
+Checking the growth rate at in number of students in both state and foundation universities is essential for the analysis. For this purpose, added a new column called "growth" and calculated the growth rate based on previous years. This helps to understand what is the differentiation trend between State and Foundation. The total growth in student numbers in four years is 16%.
+
+
+```{r}
+
+total <- raw_data %>%
+  transmute(year_of_education, total_total) %>%
+  group_by(year_of_education) %>%
+  transmute(total_student_number_d = sum(total_total)) %>%
+  distinct() %>%
+  arrange(desc(total_student_number_d))
+total_growth_x <- total
+total_growth_x["Growth1"] <- NA
+total_growth_x$Growth1 <- c((total_growth_x$total_student_number_d[1]-total_growth_x$total_student_number_d[2])/total_growth_x$total_student_number_d[1],
+                           (total_growth_x$total_student_number_d[2]-total_growth_x$total_student_number_d[3])/total_growth_x$total_student_number_d[2],
+                           (total_growth_x$total_student_number_d[3]-total_growth_x$total_student_number_d[4])/total_growth_x$total_student_number_d[3],
+                           (total_growth_x$total_student_number_d[4]-total_growth_x$total_student_number_d[5])/total_growth_x$total_student_number_d[4],0)
+total_growth_x <- total_growth_x %>% mutate(percent1 =paste0(round(Growth1*100, 2), "%"))
+total_growth_x <-total_growth_x %>% filter(Growth1 != 0) 
+total_growth_x
+```
+
+
+
+You can see growth rate in State university.
+```{r,results='hide',message=FALSE}
+total_growth1 <- devlet_total
+total_growth1["Growth1"] <- NA 
+total_growth1$Growth1 <- c((total_growth1$total_student_number_d[1]-total_growth1$total_student_number_d[2])/total_growth1$total_student_number_d[1],
+                         (total_growth1$total_student_number_d[2]-total_growth1$total_student_number_d[3])/total_growth1$total_student_number_d[2],
+                         (total_growth1$total_student_number_d[3]-total_growth1$total_student_number_d[4])/total_growth1$total_student_number_d[3],
+                         (total_growth1$total_student_number_d[4]-total_growth1$total_student_number_d[5])/total_growth1$total_student_number_d[4],0)
+total_growth1 <- total_growth1 %>% mutate(percent1 =paste0(round(Growth1*100, 2), "%"))
+total_growth1 <-total_growth1 %>% filter(Growth1 != 0) 
+
+total_growth2 <- vakif_total
+
+plot3 <- ggplot(total_growth1, aes(x = year_of_education, y = Growth1)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#CC0000") +
+  geom_text(aes(label = percent1), position = position_dodge(0.9),
+            vjust = 1.5, color = "white")+
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "", y = "Growth(%)")  +
+  labs(title = "Growth Rate of Students (State University)")+ theme_minimal()+ theme(line=element_blank())
+plot3
+
+```
+
+You can see growth rate in foundation university.
+
+```{r,results='hide',message=FALSE}
+total_growth2 <- vakif_total
+total_growth2["Growth2"] <- NA
+total_growth2$Growth2 <- c((total_growth2$total_student_number_v[1]-total_growth2$total_student_number_v[2])/total_growth2$total_student_number_v[1],
+                           (total_growth2$total_student_number_v[2]-total_growth2$total_student_number_v[3])/total_growth2$total_student_number_v[2],
+                           (total_growth2$total_student_number_v[3]-total_growth2$total_student_number_v[4])/total_growth2$total_student_number_v[3],
+                           (total_growth2$total_student_number_v[4]-total_growth2$total_student_number_v[5])/total_growth2$total_student_number_v[4],0)
+total_growth2 <- total_growth2 %>% mutate(percent2 =paste0(round(Growth2*100, 2), "%"))
+total_growth2 <-total_growth2 %>% filter(Growth2 != 0)
+
+
+plot4 <-ggplot(total_growth2, aes(x = year_of_education, y = Growth2)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#DA4545") +
+  geom_text(aes(label = percent2), position = position_dodge(0.9),
+            vjust = 1.5, color = "white")+
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "", y = "Growth(%)")+
+  labs(title = "Growth (Foundation University)")+ theme_minimal()+ theme(line=element_blank())
+plot4
+```
+
+
+
+### 1.2.4. Gender Distribution of University Students
+
+The following table demonstrated the gender distribution of university students. To obtain, data was edited and converted gender names into columns. Percentage of females in higher education is 47.5 for 2018-2019 Academic Year. The average of last five years' female split is 46.4%. This showcases an improvement where has an improvement area.
+
+Although the number of female students increases every year, the number of male students is still leading.
+One improvement area is to encourage female participation to higher education to have country representative education outcome. 
+
+
+
+```{r,results='hide',message=FALSE}
+Gender <- raw_data %>%
+  transmute(year_of_education,name_of_university, female=total_female, male=total_male) %>% 
+  gather(gender,student_num,female:male)
+
+plot6 <-ggplot(data = Gender, aes(x = year_of_education, y = student_num, fill = gender)) + 
+  geom_bar(stat = "identity",position = "stack") + scale_y_continuous(labels = scales::comma) +
+  labs(x = "", y = "Student Number", title = "Gender Split Among All Universities") + scale_fill_manual(values = c("#DA4545", "#CC0000"))+ theme_minimal()+ theme(line=element_blank())
+plot6
+
+```
+
+### 1.2.5. Student Numbers in Universities
+
+Anadolu University has the highest student population since it has a unique program called "Open Education" which enables students to participate with distance. For the last 5 years, Anadolu University has been able to provide education to 15 million students.
+
+```{r,results='hide',message=FALSE}
+university <- raw_data%>%
+  select(name_of_university, total_total)%>%
+  group_by(name_of_university)%>%
+  transmute(lala = sum(total_total)) %>% distinct() %>%
+  arrange(desc(lala)) %>%
+  filter(row_number()<2)
+print(university)
+
+```
+
+### 1.2.6. Differentiation of Associate Program
+Associate program is defined a two year long study in Turkish educational system. This consits of 41% percentage of total students. The number of students in associate program is increasing. However, the latest year the trend becomes flatter. The total number of students is 12043034.
+
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(onlisans_male, onlisans_female, year_of_education)%>%
+  group_by(year_of_education)%>%
+  transmute(onlisans_total = sum(onlisans_female,onlisans_female)) %>% distinct() %>%
+  arrange(desc(onlisans_total)) %>%
+  print(onlisans_total) %>%
+  ggplot(., aes(x = year_of_education, y = onlisans_total, group=1)) + 
+  geom_line(color="#DA4545") + 
+  geom_point(color= "#CC0000")+
+  labs( x="" , y = "Student Number", title="Associate Students")+ 
+  theme_minimal()+ theme(line=element_blank())
+```
+
+### 1.2.7. Differentiation of Bachelors Program
+The number of students in pre-bachelor program is increasing. Especially in the previous year the growth rate has increased the peak of last five years. The amount of total students enrolled in Bachelors is 18596460 which is 53% of total student ratio for five years.
+
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(lisans_male, lisans_female, year_of_education)%>%
+  group_by(year_of_education)%>%
+  transmute(lisans_total = sum(lisans_female,lisans_female)) %>% distinct() %>%
+  arrange(desc(lisans_total)) %>%
+  print(lisans_total) %>%
+  ggplot(., aes(x = year_of_education, y = lisans_total, group=1)) + 
+  geom_line(color="#DA4545") + 
+  geom_point(color= "#CC0000")+
+   labs( x="" , y = "Student Number", title="Bachelors Students")+ 
+  theme_minimal()+ theme(line=element_blank())
+```
+
+### 1.2.8. Differentiation of Masters Program
+The number of students enrolled to masters program is decresing. This is because, after 2016 year attempted coup, 6 numbers of foundation universities linked to FETÖ has been closed and Master's students are not transferred to other universities. The decreasing trend continuous. This consits of 5% percentage of total students with absolut number of 1693724 students.
+
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(master_male, master_female, year_of_education)%>%
+  group_by(year_of_education)%>%
+  transmute(master_total = sum(master_female,master_female)) %>% distinct() %>%
+  arrange(desc(master_total)) %>%
+  print(master_total) %>%
+  ggplot(., aes(x = year_of_education, y = master_total, group=1)) + 
+  geom_line(color="#DA4545") + 
+  geom_point(color= "#CC0000")+
+   labs( x="" , y = "Student Number", title="Masters Students")+ 
+  theme_minimal()+ theme(line=element_blank()) 
+```
+
+### 1.2.9. Differentiation of Doctorate Program
+The number of students in doctorate program is increasing. This number is not impacted from close-out of foundation universities event since doctorate students can continue their program with different scholars. The second reason is because this number is the smallest fraction in total higher education. The doctorate students consists of 1% percent of total student number with absolute number of 378444. 
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(doctorate_male, doctorate_female, year_of_education)%>%
+  group_by(year_of_education)%>%
+  transmute(doctorate_total = sum(doctorate_female,doctorate_female)) %>% distinct() %>%
+  arrange(desc(doctorate_total)) %>%
+  print(doctorate_total) %>%
+  ggplot(., aes(x = year_of_education, y = doctorate_total, group=1)) + 
+  geom_line(color="#DA4545") + 
+  geom_point(color= "#CC0000")+
+  labs( x="" , y = "Student Number", title="Doctorate Students")+ 
+  theme_minimal()+ theme(line=element_blank()) 
+```
+
+### 1.2.10. Gender Split over Years
+
+The split of genders are evenly distributed with male dominance. However the gap closes over the years.
+
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(onlisans_male, onlisans_female, lisans_male, lisans_female, master_male, master_female, 
+         doctorate_male, doctorate_female, year_of_education, total_total) %>%
+  group_by(year_of_education) %>%
+  mutate(total_total2=sum(total_total)) %>%
+  mutate(female_split = (sum(onlisans_female,lisans_female, master_female, doctorate_female)/total_total2)) %>%
+  mutate(male_split = (sum(onlisans_male,lisans_male, master_male, doctorate_male)/total_total2)) %>%
+  select(male_split, female_split) %>%
+  distinct() %>%
+  arrange(desc(year_of_education)) %>%
+  group_by(year_of_education) %>%
+  gather(Gender, gender_split, male_split:female_split) %>%
+  ggplot(., aes(x = year_of_education, y = gender_split, fill = Gender)) + scale_fill_manual(values = c("#CC0000","#DA4545"))+  theme_minimal()+ theme(line=element_blank()) + geom_bar(stat = "identity") + 
+  labs(x = "Year of Education", y = "Student Split", title = "Student Gender Split over Education Years ") + 
+  theme( axis.text.x = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) + guides(fill=guide_legend(title="Gender", reverse=TRUE))
+   labs( x="" , y = "Student Number", title="Masters Students")+ theme_minimal() + theme(line=element_blank()) 
+```
+
+
+### 1.2.11. Program Participation Rates over Years
+Bachelors and Associate degrees dominate the total overlook. Masters student split is increasing
+
+```{r,results='hide',message=FALSE}
+raw_data%>%
+  select(onlisans_male, onlisans_female, lisans_male, lisans_female, master_male, master_female, 
+         doctorate_male, doctorate_female, year_of_education, total_total) %>%
+  group_by(year_of_education) %>%
+  mutate(onlisans_total = sum(onlisans_female,onlisans_male)) %>% 
+  mutate(lisans_total = sum(lisans_male,lisans_female)) %>% 
+  mutate(master_total = sum(master_female,master_male)) %>% 
+  mutate(doctorate_total = sum(doctorate_female,doctorate_male)) %>%
+  mutate(total_total2=sum(total_total)) %>%
+  select(doctorate_total, onlisans_total, master_total, lisans_total, total_total2) %>%
+  distinct() %>%
+  group_by(year_of_education) %>%
+  gather(Study, study_type_split, doctorate_total:lisans_total) %>%
+  ggplot(., aes(x = year_of_education, y = study_type_split, fill = Study)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Year of Education", y = "Student Split", title = "Study Type Split over Education Years ") + theme_minimal()+ theme(line=element_blank())  + scale_fill_manual(values = c("#CC0000","#DA4545","#FF0606","#920707"))+
+  scale_y_continuous(labels = scales::comma) + 
+  theme( axis.text.x = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8))+
+  guides(fill=guide_legend(title="Gender", reverse=TRUE))
+```
+
+
+### 1.2.12. Cities Providing Different Education Institutions
+Excluding top biggest cities, Konya is the biggest city containing 6 different higher education constitutions. 51% of cities have only one universities. There is no single city that does not have any higher education institutions.
+
+```{r,results='hide',message=FALSE}
+raw_data  %>% 
+  select(year_of_education, total_total, city) %>%
+  group_by(year_of_education) %>%
+  mutate(total_total3 = sum(total_total)) %>%
+  group_by(city, year_of_education) %>%
+  arrange(desc(total_total3))
+
+raw_data%>%
+  
+  select(city)%>%
+  distinct()
+
+city_count <- rep(1, times= nrow(raw_data))
+
+raw_data2 <- raw_data %>%
+  mutate(uni_count = city_count) %>%
+  select(city, uni_count, name_of_university) %>%
+  distinct() %>%
+  group_by(city) %>%
+  transmute(uni_count = sum(uni_count)) %>%
+  distinct() %>% 
+  ggplot(., aes(x = reorder(city,uni_count), y = uni_count)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "School", y = "#", title = "Schools in Cities ") + 
+  theme_bw() + 
+  scale_y_continuous(labels = scales::comma) + 
+  theme( axis.text.x = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) +
+  theme (axis.text.x=element_text (angle=-90,vjust=0.5, hjust=0)) +
+  scale_fill_manual(values = c('#f39c12', '#e67e22'),guide=FALSE)
+
+raw_data %>%
+  mutate(uni_count = city_count) %>%
+  select(city, uni_count, name_of_university) %>%
+  distinct() %>%
+  group_by(city) %>%
+  transmute(uni_count = sum(uni_count)) %>%
+  distinct() %>% filter(city != c("ISTANBUL"), city != c("ANKARA"), city != c("IZMIR")) %>%
+  ggplot(., aes(x = reorder(city,uni_count), y = uni_count)) + 
+  geom_bar(stat = "identity", color = "#CC0000", fill = "#DA4545") + 
+  labs(x = "School", y = "#", title = "Schools in Cities ") + theme_minimal()+ theme(line=element_blank()) + scale_y_continuous(labels = scales::comma) + 
+  theme( axis.text.x = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 6),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) +
+  theme (axis.text.x=element_text (angle=-90,vjust=0.5, hjust=0)) + scale_fill_manual(values = c("#CC0000"), guide= FALSE)
+```
+
+### 1.2.13. Number of Students in each Region
+
+Let's compare the number of students in each region by gender. We sum all the student counts for associate, license, masters and doctorate degrees. East Anatolia has almost an equal gender split with a low base. Males are dominating in others.  
+
+```{r,results='hide',message=FALSE}
+
+raw_data%>%
+  transmute(region, Male=onlisans_male+lisans_male+master_male+doctorate_male, Female=onlisans_female+lisans_female+master_female+doctorate_female) %>%
+  group_by(region) %>% 
+  transmute(Male = sum(Male), Female = sum(Female)) %>% 
+  distinct() %>% 
+  gather(Gender, number_of_student, Male:Female) %>% 
+  ggplot(data=., aes(x=region, y=number_of_student, fill=Gender))+
+  geom_bar(stat="identity",position=position_dodge()) + 
+  labs(x = "Region",y= "Total # of Students", title = "Gender Split in Regions") +
+theme_minimal()+ theme(line=element_blank()) +
+theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::comma) + scale_fill_manual(values = c("#DA4545", "#CC0000"))
+
+
+```
+
+Note that the most populated region with students is İç Anadolu since the student quota of universities in this region is outnumbered the other regions. Marmara follows the İç Anadolu since there are lots of universities in İstanbul. It can also be said that the number of male students are greater than the female students.
+
+### 1.2.14. Number of Students in each Region by Study Type
+
+Let's compare the distribution of male and female students for each study type. For this purpose, we grouped the data by regions and summed the total number of male and female students seperately.
+
+```{r,results='hide',message=FALSE}
+
+df1<- raw_data%>%
+  group_by(region) %>%
+  transmute(Male = sum(onlisans_male), Female = sum(onlisans_female), 
+            onlisans_total = Male + Female) %>%
+  select(region, Male, Female) %>%
+  distinct() %>% gather(Gender, onlisans, Male:Female) %>%
+  ggplot(data = ., aes(x = region, y = onlisans, fill = Gender)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Region", y = "# of Students", title = "Total # of Associate Degree Students") + 
+  theme_minimal()+ theme(line=element_blank()) +
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) + 
+  scale_y_continuous(labels = scales::comma) + 
+  guides(fill=guide_legend(title="Gender", reverse=TRUE)) + scale_fill_manual(values = c("#DA4545", "#CC0000"))       
+
+df2<- raw_data%>%
+  group_by(region) %>%
+  transmute(Male = sum(lisans_male), Female = sum(lisans_female), 
+            lisans_total = Male + Female) %>%
+  select(region, Male, Female) %>%
+  distinct() %>% gather(Gender, lisans, Male:Female) %>%
+  ggplot(data = ., aes(x = region, y = lisans, fill = Gender)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Region", y = "# of Students", title = "Total # of Bachelors Degree Students") + 
+  theme_minimal()+ theme(line=element_blank()) +
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) + 
+  scale_y_continuous(labels = scales::comma) + 
+  guides(fill=guide_legend(title="Gender", reverse=TRUE)) + scale_fill_manual(values = c("#DA4545", "#CC0000"))
+
+df3<- raw_data%>%
+  group_by(region) %>%
+  transmute(Male = sum(master_male), Female = sum(master_female), 
+            master_total = Male + Female) %>%
+  select(region, Male, Female) %>%
+  distinct() %>% gather(Gender, master, Male:Female) %>%
+  ggplot(data = ., aes(x = region, y = master, fill = Gender)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Region", y = "# of Students", title = "Total # of Masters Degree Students") + 
+  theme_minimal()+ theme(line=element_blank()) + 
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) + 
+  scale_y_continuous(labels = scales::comma) + 
+  guides(fill=guide_legend(title="Gender", reverse=TRUE))+scale_fill_manual(values = c("#DA4545", "#CC0000")) 
+
+
+df4<- raw_data%>%
+  group_by(region) %>%
+  transmute(Male = sum(doctorate_male), Female = sum(doctorate_female), 
+            doctorate_total = Male + Female) %>%
+  select(region, Male, Female) %>%
+  distinct() %>% gather(Gender, doctorate, Male:Female) %>%
+  ggplot(data = ., aes(x = region, y = doctorate, fill = Gender)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Region", y = "# of Students", title = "Total # of Doctorate Degree Students") + 
+  theme_minimal()+ theme(line=element_blank()) +
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8),
+         axis.text.y = element_text(angle = 45,vjust = 0.49, hjust = 0.49, size = 8)) + 
+  scale_y_continuous(labels = scales::comma) + 
+  guides(fill=guide_legend(title="Gender", reverse=TRUE))+scale_fill_manual(values = c("#DA4545", "#CC0000")) 
+
+ggarrange(df1, df2, df3, df4, ncol = 2, nrow = 2)
+
+```
+
+It can easily be concluded that the Middle Anatolia  region has the most students for Associate and Bachelors Degrees. However, for Masters and Doctorate Degrees, Marmara region has the most students. This can give us information that the universities in Marmara region are more focused to post graduate programs. There is no visible difference in other regions. Second improvement area is to distribute post-graduate programs in other programs with incentive approach.
+
+
+### 1.2.15. Post-Graduate Student Percentage with respect to Student Type in Regions
+
+Post graduate study is essential to build know-how. Therefore looking after distribution of Masters and Doctorate in regions, observing that Middle Anatolia has a higher Doctorate split than others. Malatya and Ankara has the highest ratio in Doctorate. With Ankara's high base this reflects the regions split balance. Masters and Doctorate female split participations are following: 40.5%,  42.3%. Total split is 40.9%.
+
+
+```{r,results='hide',message=FALSE}
+
+raw_data%>%
+  transmute(region, total_master=master_male + master_female, total_doctorate = doctorate_male + doctorate_female, total = total_master + total_doctorate) %>%
+  group_by (region) %>%
+  transmute(total_master = sum(total_master), total_doctorate = sum(total_doctorate), total = sum(total)) %>%
+  distinct() %>%
+  transmute(Master = total_master / total , Doctorate=total_doctorate / total) %>%
+  gather(Type, Student_Frac, Master:Doctorate) %>%
+  arrange(Type, desc(Student_Frac)) %>%
+  ggplot(data=., aes(x=region, y=Student_Frac, fill=Type))+
+  geom_bar(stat="identity") + 
+  labs(x = "Region",y= "Student Percentage (%)", title = "Master's and Doctorate Students Percentage by Cities", fill= "Student Type") +
+  theme_minimal()+ theme(line=element_blank()) +
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) + scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  scale_y_continuous(labels = scales::percent)
+
+```
+
+
+### 1.2.16. Post Graduate Student Percentage with respect to Year of Education for each Gender
+
+Post graduate studies are man dominated versus total student split. Overall, male students are more interested in post graduate programs than female students. However, the trend is more female students enrolled in master's or doctorate programs lately. There is an increasing trend for female students to post graduate programs after 2016-2017 education years.
+```{r,results='hide',message=FALSE}
+
+raw_data%>%
+  transmute(year_of_education, total_male=master_male + doctorate_male, total_female = master_female + doctorate_female, total = total_male + total_female) %>%
+  group_by (year_of_education) %>%
+  transmute(total_male = sum(total_male), total_female = sum(total_female), total = sum(total)) %>%
+  distinct() %>%
+  transmute(Male = total_male / total , Female=total_female / total  ) %>%
+  gather(Gender, Student_Frac, Male:Female) %>%
+  ggplot(data=., aes(x=year_of_education, y=Student_Frac, fill=Gender))+
+  geom_bar(stat="identity") + 
+  labs(x = "Year of Education",y= "Student Percentage", title = "Student Percentage of Master's and Doctorate Students", fill= "Gender") +
+  theme_minimal()+ theme(line=element_blank()) +
+  theme(axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::percent) + scale_fill_manual(values = c("#DA4545", "#CC0000"))
+
+
+```
+
+
+
+
+# 2. Student Admission Program - Applicants and Enrollments Analyses
+
+## 2.1. From Raw to Civilized Data
+
+This dataset enables to understand trends on student admission exam for five years. Dataset includes high school types, applicant numbers and accepted students for different graduate programs between 2015 - 2019.  
+
+And final civilized data is uploaded to the team's GitHub page, it can be accessed the whole data from [here.](https://github.com/pjournal/mef03g-polatalemd-r/blob/master/2015-2019_YKS_BASVURAN_YERLESEN_.xlsx?raw=true)
+
+In order to enhance reproduceable source, civilized data to group's [GitHub page.](https://github.com/pjournal/mef03g-polatalemd-r)
+
+```{r results='hide', message=FALSE}
+
+tmp <- tempfile(fileext = ".xlsx")
+download.file("https://github.com/pjournal/mef03g-polatalemd-r/blob/master/2015-2019_YKS_BASVURAN_YERLESEN_.xlsx?raw=true",destfile = tmp,mode = 'wb')
+YKS_BASVURAN_YERLESEN <- readxl::read_excel(tmp ,col_names = TRUE)
+file.remove(tmp)
+colnames(YKS_BASVURAN_YERLESEN) <- c("okul_turu","yil","son_sinif_duzeyinde_basvuran","son_sinif_duzeyinde_yerlesen_lisans","son_sinif_duzeyinde_yerlesen_onlisans","son_sinif_duzeyinde_yerlesen_ao","mezun_daha_once_yerlesmemis_basvuran","mezun_daha_once_yerlesmemis_yerlesen_lisans","mezun_daha_once_yerlesmemis_yerlesen_onlisans","mezun_daha_once_yerlesmemis_yerlesen_ao","bir_yuksek_ogretim_kurumu_bitirmis_basvuran","bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_lisans","bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_onlisans","bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_ao","daha_once_yerlesmis_basvuran","daha_once_yerlesmis_yerlesen_lisans","daha_once_yerlesmis_yerlesen_onlisans","daha_once_yerlesmis_yerlesen_ao")
+
+``` 
+
+To give a summary of data, having 11.5 million student from 27 different high school type which applied for 3 different program in between 2015-2019 and data categorizes these applicants in four main category as mentioned below :
+
+The students who applied in their last semester of high school education
+The applicants who graduated from high school but didn't settle any of programs.
+The applicants who finished one of these graduate programs before
+The applicants who accepted one of these graduate programs before but didn't finish it.
+
+## 2.2. Analyses of Student Admission Exam - Applicants and Enrollments Dataset
+
+### 2.2.1. Total Applicant Number Analysis
+
+The distribution of total applicants in years. The absolut number is rising.
+
+```{r results='hide', message=FALSE}
+
+first_four_basvuran <- YKS_BASVURAN_YERLESEN %>% 
+  mutate(total_basvuran = son_sinif_duzeyinde_basvuran + mezun_daha_once_yerlesmemis_basvuran + 
+           bir_yuksek_ogretim_kurumu_bitirmis_basvuran + daha_once_yerlesmis_basvuran) %>%
+  select(okul_turu,yil,total_basvuran) %>%
+  group_by(okul_turu) %>% transmute(total_five_year_basvuran = sum(total_basvuran)) %>% distinct() %>%
+  arrange(desc(total_five_year_basvuran)) %>% head(4)
+
+YKS_BASVURAN_YERLESEN %>% mutate(lise_turu = ifelse(okul_turu %in% first_four_basvuran$okul_turu,okul_turu,"DIGER"))%>%
+  mutate(total_basvuran = son_sinif_duzeyinde_basvuran + mezun_daha_once_yerlesmemis_basvuran + bir_yuksek_ogretim_kurumu_bitirmis_basvuran + daha_once_yerlesmis_basvuran)%>%
+  select(lise_turu,yil,total_basvuran) %>%
+  group_by(lise_turu,yil) %>% transmute(total_basvuran_per_year = sum(total_basvuran)) %>% distinct() %>% 
+  arrange(desc(yil)) %>%
+  ggplot(data = ., aes(x = yil, y = total_basvuran_per_year, fill = as.character(lise_turu))) +
+  geom_bar(stat = "identity") + aes(y=total_basvuran_per_year) +
+    theme_minimal()+ theme(line=element_blank()) +
+  labs(x = "", y = "", title = "Number Of Applicants In Years") +
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::comma) +
+  guides(fill=guide_legend(title="School Type", reverse=TRUE))+ theme(legend.position="bottom") + theme(legend.text = element_text(size=6.2))+ theme(legend.key.size = unit(1,"cm")) + scale_fill_brewer(palette="Reds") + theme_minimal()+ theme(line=element_blank())
+
+```
+
+In this figure it can be seen as four different school types which have the highest applicant numbers in years, other 23 school type applicants mentioned as "DIGER/OTHERS".
+
+As we can see from figure, there is a significant increase in applications from vocational and anatolian high school while number of applicants from regular high schools decreasing. This situation can be explained with the change in governance policy which aims to convert most of regular high schools into anatolian and students prefered vocational high schools instead of regular ones in years.
+
+### 2.2.2. Success Rate Analysis
+
+
+```{r message=FALSE}
+
+graph2 <-   YKS_BASVURAN_YERLESEN %>% 
+  mutate(total_basvuran = son_sinif_duzeyinde_basvuran + mezun_daha_once_yerlesmemis_basvuran + 
+           bir_yuksek_ogretim_kurumu_bitirmis_basvuran + daha_once_yerlesmis_basvuran,
+         total_yerlesen = son_sinif_duzeyinde_yerlesen_lisans+son_sinif_duzeyinde_yerlesen_onlisans+
+           son_sinif_duzeyinde_yerlesen_ao + 
+           mezun_daha_once_yerlesmemis_yerlesen_lisans + mezun_daha_once_yerlesmemis_yerlesen_ao + 
+           mezun_daha_once_yerlesmemis_yerlesen_onlisans + 
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_lisans + 
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_onlisans + 
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_ao + 
+           daha_once_yerlesmis_yerlesen_lisans + daha_once_yerlesmis_yerlesen_onlisans + 
+           daha_once_yerlesmis_yerlesen_ao,
+         lise_turu = ifelse(okul_turu %in% first_four_basvuran$okul_turu,okul_turu,"DIGER")) %>% 
+  select(lise_turu,yil,total_basvuran,total_yerlesen) %>%
+  group_by(lise_turu,yil) %>% transmute(total_basvuran_in_year = sum(total_basvuran),
+                                        total_yerlesen_in_year = sum(total_yerlesen),
+                                        basari_orani = round(total_yerlesen_in_year/total_basvuran_in_year,2)) %>%
+  distinct() %>%
+  ggplot(aes(x=yil, y=basari_orani, color=lise_turu)) + geom_point(size = 3) + geom_line(size=1) +
+  labs(x = "", y = "", title = "Comparison of Success Rates In Years") + theme(legend.position="bottom") +   theme_minimal()+ theme(line=element_blank()) +
+ theme(legend.text = element_text(size=6.2))+ theme(legend.key.size = unit(0.3,"cm")) + scale_color_brewer(palette="Reds")
+
+
+graph3 <-   YKS_BASVURAN_YERLESEN %>% 
+  mutate(total_basvuran = son_sinif_duzeyinde_basvuran + mezun_daha_once_yerlesmemis_basvuran + bir_yuksek_ogretim_kurumu_bitirmis_basvuran + daha_once_yerlesmis_basvuran,
+         total_yerlesen = son_sinif_duzeyinde_yerlesen_lisans+son_sinif_duzeyinde_yerlesen_onlisans+son_sinif_duzeyinde_yerlesen_ao + 
+           mezun_daha_once_yerlesmemis_yerlesen_lisans + mezun_daha_once_yerlesmemis_yerlesen_ao + mezun_daha_once_yerlesmemis_yerlesen_onlisans + 
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_lisans + bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_onlisans + bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_ao + 
+           daha_once_yerlesmis_yerlesen_lisans + daha_once_yerlesmis_yerlesen_onlisans + daha_once_yerlesmis_yerlesen_ao,
+         lise_turu = ifelse(okul_turu %in% first_four_basvuran$okul_turu,okul_turu,"DIGER")) %>% 
+  select(lise_turu,yil,total_basvuran,total_yerlesen) %>% group_by(yil) %>%  
+  transmute(yil_icinde_basvuran = sum(total_basvuran),yil_icinde_yerlesen = sum(total_yerlesen),
+            yil_icinde_basarı_oranı = round(yil_icinde_yerlesen / yil_icinde_basvuran,2)) %>% distinct() %>%
+  ggplot(data=., aes(x=yil, y=yil_icinde_basarı_oranı)) +     theme_minimal()+ theme(line=element_blank()) +
+  geom_point(col="tomato2",size = 3) + ylim(0.3,0.5) + geom_line(size=1,col="tomato2") + 
+  labs(x = "", y = "", title = "Change of Total Success Rate In Years") + theme(legend.position="none") + scale_color_manual(values = c("#CC0000"))
+
+ggarrange(graph3,graph2,nrow = 2,ncol = 1,heights = c(1.5,2))
+
+``` 
+
+
+
+First figure above shows total success rate of applicants in years.
+Although the number of applicants increased over the years, the percentage of settlers in total decreased.
+
+The biggest decrease in success rate appears in vocational high schools.
+
+
+### 2.2.3. Distribution of Accepted Students For Different Program Types In Years
+
+```{r message=FALSE}
+
+ogretim_programi <-YKS_BASVURAN_YERLESEN %>% 
+  mutate(lise_turu = ifelse(okul_turu %in% first_four_basvuran$okul_turu,okul_turu,"DIGER"),
+         total_lisans_yerlesen = son_sinif_duzeyinde_yerlesen_lisans + mezun_daha_once_yerlesmemis_yerlesen_lisans +
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_lisans + daha_once_yerlesmis_yerlesen_lisans,
+         total_onlisans_yerlesen = son_sinif_duzeyinde_yerlesen_onlisans + 
+           mezun_daha_once_yerlesmemis_yerlesen_onlisans + bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_onlisans + 
+           daha_once_yerlesmis_yerlesen_onlisans,
+         total_acikogretim_yerlesen = son_sinif_duzeyinde_yerlesen_ao + mezun_daha_once_yerlesmemis_yerlesen_ao + 
+           bir_yuksek_ogretim_kurumu_bitirmis_yerlesen_ao + daha_once_yerlesmis_yerlesen_ao) %>%
+  group_by(lise_turu,yil) %>% transmute(total_lisans_yerlesenler = sum(total_lisans_yerlesen),
+                                        total_onlisans_yerlesenler = sum(total_onlisans_yerlesen),
+                                        total_acikogretim_yerlesenler = sum(total_acikogretim_yerlesen)) %>% distinct()
+
+ogretim_programi %>% 
+  ggplot(data = ., aes(x = yil, y = total_lisans_yerlesenler, fill = as.character(lise_turu))) +
+  geom_bar(stat = "identity") + aes(y=total_lisans_yerlesenler) +
+  labs(x = "", y = "", title = "Dist.of Accepted Students To Undergraduate Programs") + theme_bw() + 
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::comma) +
+  guides(fill=guide_legend(title="Year", reverse=TRUE))+ theme(legend.position='bottom')+ theme(legend.text = element_text(size=6.2))+ theme(legend.key.size = unit(0.3,"cm")) + scale_fill_brewer(palette="Reds") + theme_minimal()+ theme(line=element_blank())
+
+```
+
+
+```{r message=FALSE}
+
+ogretim_programi %>% 
+  ggplot(data = ., aes(x = yil, y = total_onlisans_yerlesenler, fill = as.character(lise_turu))) +
+  geom_bar(stat = "identity") + aes(y=total_onlisans_yerlesenler) +
+  labs(x = "", y = "", title = "Dist.of Accepted Students To Associate Degree Programs") + theme_bw() + 
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::comma) +
+  guides(fill=guide_legend(title="School Type", reverse=TRUE))+ theme(legend.position='bottom')+ theme(legend.text = element_text(size=6.2))+ theme(legend.key.size = unit(0.3,"cm")) + scale_fill_brewer(palette="Reds") +
+  theme_minimal()+ theme(line=element_blank())
+```
+
+
+```{r message=FALSE}
+ogretim_programi %>% 
+  ggplot(data = ., aes(x = yil, y = total_acikogretim_yerlesenler, fill = as.character(lise_turu))) +
+  geom_bar(stat = "identity") + aes(y=total_acikogretim_yerlesenler) +
+  labs(x = "", y = "", title = "Dist.of Accepted Students To Open University Programs") + theme_bw() + 
+  theme( axis.text.x = element_text(angle = 90,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_y_continuous(labels = scales::comma) +    theme_minimal()+ theme(line=element_blank()) +
+
+  guides(fill=guide_legend(title="School Types", reverse=TRUE)) + theme(legend.position='bottom')+ theme(legend.text = element_text(size=6.2))+ theme(legend.key.size = unit(0.3,"cm"))+ scale_fill_brewer(palette="Reds") +   theme_minimal()+ theme(line=element_blank())
+```  
+
+As we can see in first figure, the most of the students who are placed in undergraduate programs comes from anatolian high schools. This increase in distribution can be explained with the change in governance policy which aims to convert most of regular high schools into anatolian.
+
+
+# 3. Exchange Programs Analyses
+
+## 3.1. From Raw to Civilized Data
+
+Data is downloaded of exchange programs from [YOK website](https://istatistik.yok.gov.tr/) and put together it in an excel workbook. We will make a reproducible example of data analysis from the raw data located somewhere to the final analysis.
+
+
+### 3.1.1. Some Simple Touches on Raw Data
+
+To analyze students who are participating in the exchange programs as outgoing students from Turkey. There are two other cities that is not in Turkey in the data set. So We dropped the raws the cities equals to "BOSNA-HERSEK" and "KIRGIZISTAN". Also, names of some cities were written differently in data of different years. To overcome this problem, we changed all "ICEL" city names to "MERSIN" and all "AFYON" city names to "AFYONKARAHISAR" and we got 81 distinct cities in raw data where we applied in previous dataset as well.
+
+
+```{r,results='hide',message=FALSE}
+
+tmp=tempfile(fileext=".xlsx")
+
+download.file("https://github.com/pjournal/mef03g-polatalemd-r/blob/master/rawdata_exchange_students.xlsx?raw=true",destfile=tmp,mode='wb')
+rawdata_exchange_students=readxl::read_excel(tmp)
+file.remove(tmp)
+
+rawdata_exchange_students$city <- revalue(rawdata_exchange_students$city, c("ICEL"="MERSIN"))
+rawdata_exchange_students$city <- revalue(rawdata_exchange_students$city, c("AFYON"="AFYONKARAHISAR"))
+rawdata_exchange_students$type_of_university <- revalue(rawdata_exchange_students$type_of_university, c("DEVLET"="STATE"))
+rawdata_exchange_students$type_of_university <- revalue(rawdata_exchange_students$type_of_university, c("VAKIF"="FOUNDATION"))
+rawdata_exchange_students<-rawdata_exchange_students[!(rawdata_exchange_students$city=="BOSNA-HERSEK"),]
+rawdata_exchange_students<-rawdata_exchange_students[!(rawdata_exchange_students$city=="KIRGIZISTAN"),]
+
+
+glimpse(rawdata_exchange_students)
+
+``` 
+
+To use it in further analysis, we created a _"REGION"_ column by grouping the cities. Also, we add two more columns _"GENDER"_ and _"TYPE OF THE PROGRAM"_ to make it easier to analyse the data. You can see the head of the final raw dataset below.
+
+```{r,results='hide',message=FALSE}
+rawdata_exchange_students <- rawdata_exchange_students %>% mutate(region = case_when(city %in% c("ADANA", "ANTALYA", "BURDUR", "HATAY", "ISPARTA", 
+                                                                                                "KAHRAMANMARAS", "MERSIN", "OSMANIYE") ~ "AKDENIZ",
+                                                                                    city %in% c("AGRI", "ARDAHAN", "BINGOL", "BITLIS", "ELAZIG",
+                                                                                                "ERZINCAN", "ERZURUM", "HAKKARI", "IGDIR", "KARS",
+                                                                                                "MALATYA", "MUS", "TUNCELI", "VAN") ~ "DOGUANADOLU",
+                                                                                    city %in% c("AFYONKARAHISAR", "AYDIN", "DENIZLI", "IZMIR",
+                                                                                                "KUTAHYA", "MANISA", "MUGLA", "USAK") ~ "EGE",
+                                                                                    city %in% c("ADIYAMAN", "BATMAN", "DIYARBAKIR", "GAZIANTEP",
+                                                                                                "MARDIN", "SIIRT", "SANLIURFA", "SIRNAK", "KILIS") ~ "GUNEYDOGUANADOLU",
+                                                                                    city %in% c("AKSARAY", "ANKARA","CANKIRI","ESKISEHIR","KARAMAN","KAYSERI","KIRIKKALE",
+                                                                                                "KIRSEHIR", "KONYA","NEVSEHIR","NIGDE","SIVAS","YOZGAT") ~ "ICANADOLU",
+                                                                                    city %in% c("BALIKESIR", "BILECIK", "BURSA", "CANAKKALE","EDIRNE",
+                                                                                                "ISTANBUL", "KIRKLARELI","KOCAELI","SAKARYA",
+                                                                                                "TEKIRDAG","YALOVA") ~ "MARMARA",
+                                                                                    city %in% c("AMASYA","ARTVIN","BARTIN","BAYBURT","BOLU","CORUM",
+                                                                                                "DUZCE","GIRESUN","GUMUSHANE","KARABUK","KASTAMONU",
+                                                                                                "ORDU","RIZE","SAMSUN","SINOP","TOKAT","TRABZON",
+                                                                                                "ZONGULDAK") ~ "KARADENIZ", TRUE ~ "bilinmiyor"))
+
+sutun_adi <- c("name_of_university","type_of_university","city","year_of_education","outgoing","incoming",
+               "region","type_of_program","gender")
+
+farabi <- rep("FARABI", times= nrow(rawdata_exchange_students))
+mevlana <- rep("MEVLANA", times= nrow(rawdata_exchange_students))
+erasmus <- rep("ERASMUS", times= nrow(rawdata_exchange_students))
+sex_male <- rep("MALE",times= nrow(rawdata_exchange_students))
+sex_female <- rep("FEMALE",times= nrow(rawdata_exchange_students))
+
+farabi_male <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, farabigiden_male, farabigelen_male,region) %>%
+  mutate(type_of_program = farabi, sex = sex_male)
+colnames(farabi_male) <- sutun_adi
+
+farabi_female <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, farabigiden_female, farabigelen_female,region) %>%
+  mutate(type_of_program = farabi, sex = sex_female)
+colnames(farabi_female) <- sutun_adi
+
+mevlana_male <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, mevlanagiden_male, mevlanagelen_male,region) %>%
+  mutate(type_of_program = mevlana, sex = sex_male)
+colnames(mevlana_male) <- sutun_adi
+
+mevlana_female <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, mevlanagiden_female, mevlanagelen_female,region) %>%
+  mutate(type_of_program = mevlana, sex = sex_female)
+colnames(mevlana_female) <- sutun_adi
+
+erasmus_male <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, erasmusgiden_male, erasmusgelen_male,region) %>%
+  mutate(type_of_program = erasmus, sex = sex_male)
+colnames(erasmus_male) <- sutun_adi
+
+erasmus_female <- rawdata_exchange_students %>% 
+  select(name_of_university, type_of_university, city, year_of_education, erasmusgiden_female, erasmusgelen_female,region) %>%
+  mutate(type_of_program = erasmus, sex = sex_female)
+colnames(erasmus_female) <- sutun_adi
+
+data<- rbind(erasmus_female,erasmus_male,farabi_male,farabi_female,mevlana_female,mevlana_male)
+
+```
+
+```{r,message=FALSE}
+kable(head(data,5),align="l")
+
+```
+
+## 3.2. Analyses Related to Exchange Programs Dataset
+
+There are three different exchange programs in the curricula. 
+
+_"Farabi"_ is a student and faculty exchange program between higher education institutions providing associate, bachelor, master, and doctorate education at universities and high technology institutes withing Turkey.
+
+
+_"Mevlana"_ is a program aiming at the exchange of students and teaching staff between higher education institutions in Turkey and higher education institutions abroad. (Erasmus countries are not included to this program.)
+
+
+_"Erasmus"_ provides unpaid financial support for teaching institutions to produce and implement joint projects with each other and to exchange short-term students and academic staff. It is supported by European Union.
+
+### 3.2.1. Total Number of Students Joining the Exchange Programs by Gender
+
+To see  obvious differences in students participating inexchange programs by their gender, data is  grouped  "year_of_education" and "gender" columns and calculated the total number of students joining the exchange programs. Observing that there are more female students attending to the exchange programs than male students in every year in the last 5 years. The last year, women balance has become to 47%. There is still an improvement level for women participation rate.
+
+You can see it in the bar chart below as well;
+
+```{r,message=FALSE}
+first <- data %>% select(year_of_education, gender, outgoing) %>% group_by(year_of_education, gender) %>%
+  transmute(outgoing=sum(outgoing)) %>% distinct()
+
+ggplot(data = first, aes(x = year_of_education, y = outgoing,
+                                fill = gender)) + geom_bar(stat = "identity") + 
+  labs(x = "", y = "", title = "Total Number of Students in Exchange Programs") + 
+  theme_bw() + theme( axis.text.x = element_text(angle = 0,vjust = 0.49, hjust = 0.49, size = 8)) +
+  scale_fill_manual(values = c("#CC0000", "#DA4545")) +
+  scale_y_continuous(labels = scales::comma) +   guides(fill=guide_legend(title="Gender", reverse=TRUE))+   theme_minimal()+ theme(line=element_blank())
+
+
+``` 
+
+In "2015_2016" education year, total number of students joining the exchange programs fell halfway compared to previous year. This is the result of rise of terrorist attacts which is resulted with a trial of coup between the government and a terrorist group FETÖ. Total number of students has been raising since year of 2016  and almost reached at its original level versus five years ago.
+
+
+### 3.2.2. Total Number of Students Participating in each Exchange Program
+
+To observe  differences in the total number of student by the type of the exchange program, data is grouped by "year_of_education" and "type_of_program" columns and calculated the total number of students joining the exchange programs. Observing that _"Farabi"_ was the most preffered program by students. Like in the previous example, the table changed and _"Erasmus"_ became the most preferred program by students after 2016 events. There are not so many students prefer the _"Mevlana"_ exchange program, because the institution and the countries in this program are not desirable as much as _"Erasmus"_ program.
+
+
+```{r,message=FALSE}
+second <- data %>% select(year_of_education,outgoing,type_of_program) %>% group_by(year_of_education,type_of_program) %>%
+  transmute(outgoing = sum(outgoing)) %>% distinct()
+ggplot(data=second, aes(x=year_of_education, y=outgoing, fill=type_of_program)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(x = "Year of Education",y= "Number of Students", title = "Number of Students in Each Exchange Program", fill= "Tyoe of Program") + scale_fill_manual(values = c("#A12727", "#CC0000", "#DA4545")) +
+  theme_minimal()
+
+``` 
+
+
+### 3.2.3. Total Number of Students Coming Turkish Institutions via Erasmus Program
+
+Since the _"Erasmus"_ is the most preffered exchange program by Turkish students in last years, we would like to see the number of students coming to Turkey via Erasmus program in each year and see if there are any changes. First we filtered the data (type_of_program=="Erasmus") and then grouped by education year to calculat the total number of students coming to Turkey via Erasmus program.
+
+```{r,message=FALSE}
+third <- data %>% select(year_of_education, incoming,type_of_program) %>% filter(type_of_program == "ERASMUS") %>% 
+  group_by(year_of_education) %>% transmute(type_of_program, incoming=sum(incoming)) %>% distinct()
+
+ggplot(data=third, aes(x=year_of_education, y=incoming, fill=type_of_program)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(x = "Year of Education",y= "Number of Students", title = "Number of Students Coming to Turkey via Erasmus Program", fill= "Type of Program") + scale_fill_manual(values = c("#CC0000")) + theme_minimal()+ theme(line=element_blank())
+``` 
+
+
+Observing that number of students has been decreased from 2016 to 2018 due to the coup as we mentioned before. The 2016 terrorism attached has an adverse impact on European citizens and prevented them coming to Turkey.
+
+### 3.2.4. Total Number of Students Joining Erasmus Program by Type of University
+
+ _"Erasmus"_ program is deeply analyzed in this study since it is the most preferred exchange program. Following structure is to analyse the share of university types in this program, both incoming and outgoing students share.
+
+At the below, it can be seen as the share of universities for outgoing students via _"Erasmus"_ program. The share of "STATE" universities has been rising since the attempted coup, because there are a lot of foundation universities closed by government after the attempted coup.
+
+```{r,message=FALSE}
+erasmusa_giden <- data %>% select(year_of_education, type_of_program, type_of_university, outgoing) %>% 
+  filter(type_of_program == "ERASMUS", type_of_university != "VAKIF MYO") %>% group_by(year_of_education, type_of_university) %>%
+  transmute(outgoing=sum(outgoing)) %>% distinct() %>% ungroup() %>% group_by(year_of_education) %>% 
+  transmute(type_of_university, outgoing = round(outgoing/sum(outgoing)*100)) %>% ungroup() %>% 
+  mutate(outgoing = percent(outgoing/100))
+
+
+
+pie1 <- erasmusa_giden %>% filter(year_of_education=="2014_2015") %>% 
+  ggplot(data = ., aes(x = "", y = outgoing, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = outgoing, label = outgoing),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2014-2015",fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie2 <- erasmusa_giden %>% filter(year_of_education=="2015_2016") %>% 
+  ggplot(data = ., aes(x = "", y = outgoing, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = outgoing, label = outgoing),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2015-2016", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie3 <- erasmusa_giden %>% filter(year_of_education=="2016_2017") %>% 
+  ggplot(data = ., aes(x = "", y = outgoing, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = outgoing, label = outgoing),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2016-2017", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie4 <- erasmusa_giden %>% filter(year_of_education=="2017_2018") %>% 
+  ggplot(data = ., aes(x = "", y = outgoing, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = outgoing, label = outgoing),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2017-2018", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie5 <- erasmusa_giden %>% filter(year_of_education=="2018_2019") %>% 
+  ggplot(data = ., aes(x = "", y = outgoing, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = outgoing, label = outgoing),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2018-2019", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+erasmusa_giden_pie <- ggarrange(pie1, pie2, pie3, pie4, pie5,
+          ncol = 2, nrow = 3, title="Outgoing Students via Erasmus")
+
+annotate_figure(erasmusa_giden_pie,
+                top = text_grob("Students Participating to Erasmus Program in Turkey", color = "Dark Red", 
+                                face = "bold", size = 14))
+``` 
+
+Ccomparing the university types preffered by the European students, it is not similar to the pie charts above. After 2015, the share of foundation universities showdown for two years, but then it has been rising up to 40% percent, which is really close to the share of 2014-2015 education year.
+
+
+```{r,message=FALSE}
+erasmusla_gelen <- data %>% select(year_of_education, type_of_program, type_of_university, incoming) %>% 
+  filter(type_of_program == "ERASMUS", type_of_university != "VAKIF MYO") %>% group_by(year_of_education, type_of_university) %>%
+  transmute(incoming=sum(incoming)) %>% distinct() %>% ungroup() %>% group_by(year_of_education) %>% 
+  transmute(type_of_university, incoming = round(incoming/sum(incoming)*100)) %>% ungroup() %>% 
+  mutate(incoming = percent(incoming/100))
+
+
+pie1_1 <- erasmusla_gelen %>% filter(year_of_education=="2014_2015") %>% 
+  ggplot(data = ., aes(x = "", y = incoming, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = incoming, label = incoming),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2014-2015",fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie2_2 <- erasmusla_gelen %>% filter(year_of_education=="2015_2016") %>% 
+  ggplot(data = ., aes(x = "", y = incoming, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = incoming, label = incoming),position = position_stack(vjust = 0.5))+
+  labs(title="2015-2016", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie3_3 <- erasmusla_gelen %>% filter(year_of_education=="2016_2017") %>% 
+  ggplot(data = ., aes(x = "", y = incoming, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = incoming, label = incoming),position = position_stack(vjust = 0.5))+
+  labs(title="2015-2016", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie4_4 <- erasmusla_gelen %>% filter(year_of_education=="2017_2018") %>% 
+  ggplot(data = ., aes(x = "", y = incoming, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = incoming, label = incoming),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2017-2018", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+pie5_5 <- erasmusla_gelen %>% filter(year_of_education=="2018_2019") %>% 
+  ggplot(data = ., aes(x = "", y = incoming, fill = type_of_university)) +
+  geom_bar(width = 1, stat = "identity", color = "black") +
+  coord_polar("y", start = 0)+
+  geom_text(aes(x = 1, y = incoming, label = incoming),position = position_stack(vjust = 0.5),color = "black")+
+  labs(title="2018-2019", fill = "Type of University")+ scale_fill_manual(values = c("#DA4545", "#CC0000")) +
+  theme_void()
+
+erasmusla_gelen_pie <- ggarrange(pie1_1, pie2_2, pie3_3, pie4_4, pie5_5,
+          ncol = 2, nrow = 3, title="Erasmusa Giden")
+
+annotate_figure(erasmusla_gelen_pie,
+                top = text_grob("Students Coming Turkey via Erasmus Program by Type of University", color = "Dark Red", 
+                                face = "bold", size = 14)) + theme(line=element_blank())
+
+``` 
+
+
+### 3.2.5. Most Desirable Cities in Turkey by Students
+
+Finally, to see the top five most desirable cities by students in each year. Grouping the data by year and city, then calculated the number of incoming students. Istanbul is the most preferred city in five years in a row. Ankara was the second one since 2018, which replaced by Konya in the last year. You can see the bar chart below for further information.
+
+
+```{r,message=FALSE}
+one <- data %>% select(year_of_education, city, incoming) %>% filter(year_of_education== "2014_2015") %>% 
+  group_by(year_of_education,city) %>% transmute(incoming = sum(incoming)) %>% distinct() %>% 
+  arrange(desc(incoming)) %>% head(5)
+
+two <-data %>% select(year_of_education, city, incoming) %>% filter(year_of_education== "2015_2016") %>% 
+  group_by(year_of_education,city) %>% transmute(incoming = sum(incoming)) %>% distinct() %>% 
+  arrange(desc(incoming)) %>% head(5)
+
+three <-data %>% select(year_of_education, city, incoming) %>% filter(year_of_education== "2016_2017") %>% 
+  group_by(year_of_education,city) %>% transmute(incoming = sum(incoming)) %>% distinct() %>% 
+  arrange(desc(incoming)) %>% head(5)
+
+four <-data %>% select(year_of_education, city, incoming) %>% filter(year_of_education== "2017_2018") %>% 
+  group_by(year_of_education,city) %>% transmute(incoming = sum(incoming)) %>% distinct() %>% 
+  arrange(desc(incoming)) %>% head(5)
+
+five <-data %>% select(year_of_education, city, incoming) %>% filter(year_of_education== "2018_2019") %>% 
+  group_by(year_of_education,city) %>% transmute(incoming = sum(incoming)) %>% distinct() %>% 
+  arrange(desc(incoming)) %>% head(5)
+
+analyse_five <- rbind(one,two,three,four,five)
+
+ggplot(data=analyse_five, aes(x=year_of_education, y=incoming, fill=city)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(x = "Year of Education",y= "Number of Students", title = "Most Preferred Cities in Exchange Programs", fill= "City") + scale_fill_manual(values = c("#DA4545", "#CC0000", "#A12727", "#B28282", "#920707","#643D3D","#D14B4B","#7A4A4A"))+
+  theme_minimal()+ theme(line=element_blank())
+``` 
+
+
+### Sources:
+
+istatistik.yok.gov.tr
+yok.gov.tr
+
