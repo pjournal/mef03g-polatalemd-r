@@ -7,16 +7,16 @@ Members:
 - Oğuz Kirazdiken
 - Özgür Kenanoğlu
 
-### ODD Assignment (Group)
+### ODD Assignment 1
 
 You can see our ODD explanatory data analysis assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/ODD-Car-Sales-Analysis.html).
 
-### EGM Assignment (Group)
+### EGM Assignment 2
 
 Analysis of EGM assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/EGM_DATA_ANALYSIS.html).
 
-### Project Proposal
-
+### Group Project Proposal
+ ## Understanding Turkey Higher Education System
 Link to our project proposal [here](https://pjournal.github.io/mef03g-polatalemd-r/Polat-Alemd-R-Project-Proposal.html).
 
 ### Project Initial Analysis
