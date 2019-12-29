@@ -1,11 +1,11 @@
 ## Welcome to PolatAlemd-R GitHub Page
 
 Members:
-- Burcu Balkan(https://pjournal.github.io/mef03-balkanburcu/)
-- Berk çakar(https://pjournal.github.io/mef03-cakarb/)
-- Oğuz Ay(https://pjournal.github.io/mef03-oguzayy/)
-- Oğuz Kirazdiken(https://pjournal.github.io/mef03-oguzkirazdiken/)
-- Özgür Kenanoğlu(https://pjournal.github.io/mef03-ozgurken/)
+- [Burcu Balkan](https://pjournal.github.io/mef03-balkanburcu/)
+- [Berk çakar](https://pjournal.github.io/mef03-cakarb/)
+- [Oğuz Ay](https://pjournal.github.io/mef03-oguzayy/)
+- [Oğuz Kirazdiken](https://pjournal.github.io/mef03-oguzkirazdiken/)
+- [Özgür Kenanoğlu](https://pjournal.github.io/mef03-ozgurken/)
 
 ### ODD Assignment 1
 
