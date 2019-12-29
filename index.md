@@ -1,11 +1,11 @@
 ## Welcome to PolatAlemd-R GitHub Page
 
 Members:
-- Burcu Balkan
-- Berk çakar
-- Oğuz Ay
-- Oğuz Kirazdiken
-- Özgür Kenanoğlu
+- Burcu Balkan(https://pjournal.github.io/mef03-balkanburcu/)
+- Berk çakar(https://pjournal.github.io/mef03-cakarb/)
+- Oğuz Ay(https://pjournal.github.io/mef03-oguzayy/)
+- Oğuz Kirazdiken(https://pjournal.github.io/mef03-oguzkirazdiken/)
+- Özgür Kenanoğlu(https://pjournal.github.io/mef03-ozgurken/)
 
 ### ODD Assignment 1
 
@@ -15,8 +15,8 @@ You can see our ODD explanatory data analysis assignment on this [link](https://
 
 Analysis of EGM assignment on this [link](https://pjournal.github.io/mef03g-polatalemd-r/EGM_DATA_ANALYSIS.html).
 
-### Group Project Proposal
- ## Understanding Turkey Higher Education System
+### Group Project Proposal - Understanding Turkey Higher Education System
+
 Link to our project proposal [here](https://pjournal.github.io/mef03g-polatalemd-r/Polat-Alemd-R-Project-Proposal.html).
 
 ### Project Initial Analysis
